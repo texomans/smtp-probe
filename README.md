@@ -93,14 +93,16 @@ The SMTP hostname input starts **blank**. Each send attempt supports one recipie
 
 Available images: [GHCR](https://github.com/texomans/smtp-probe/pkgs/container/smtp-probe), for `linux/amd64` and `linux/arm64`.
 
-## Roadmap — planned features (not yet implemented)
+## Upcoming Features
 
-- **SPF, DKIM and DMARC diagnostics:** Inspect mail-authentication DNS records, explain problems and summarize alignment.
-- **HTML email test:** Compose and send an HTML test email with a plain-text alternative, preview the rendered HTML safely, and inspect MIME/content-type behavior. Sending remains subject to the administrator's existing send restrictions and recipient allowlist.
-- **OAuth2 / XOAUTH2 SMTP authentication:** Test modern authentication paths for providers such as Microsoft 365 and Google Workspace.
-- **Saved SMTP profiles:** Reuse host, port, transport and nonsecret preferences; do not save SMTP passwords by default.
-- **Email attachments:** Test multipart messages with optional attachments under explicit size and type limits.
-- **SMTP security and connectivity grading:** Summarize TLS quality, certificate validation and SMTP capability results in a readable diagnostic scorecard.
+We'll check these off as they're released:
+
+- [ ] **SPF, DKIM, and DMARC diagnostics** — Inspect DNS records, identify configuration issues, and report alignment.
+- [ ] **HTML email testing** — Compose HTML messages with a plain-text alternative, safely preview the HTML, and test multipart email delivery.
+- [ ] **OAuth2 / XOAUTH2 SMTP authentication** — Support modern authentication testing for providers such as Microsoft 365 and Google Workspace.
+- [ ] **Saved SMTP profiles** — Reuse server, port, encryption, and other nonsecret connection settings without saving passwords by default.
+- [ ] **Email attachments** — Send test messages with attachments under explicit file-size and type restrictions.
+- [ ] **SMTP security and connectivity grading** — Summarize TLS, certificate validation, supported authentication methods, and SMTP capabilities in an easy-to-read scorecard.
 
 ## Security
 
