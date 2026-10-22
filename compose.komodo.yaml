@@ -1,0 +1,40 @@
+# Public HTTPS deployment through a reverse proxy (e.g. NPM).
+# Komodo Stack: file source from GitHub, Compose path compose.komodo.yaml.
+# Supply secrets through Komodo Stack Environment / Secrets, NEVER the repository.
+# No exposed host ports; the reverse proxy must share NPM_NETWORK.
+name: smtp-probe
+services:
+  app:
+    image: ${SMTP_PROBE_IMAGE:-ghcr.io/texomans/smtp-probe:v0.2.0-beta.1}
+    container_name: smtp-probe
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 1.0
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      SMTP_PROBE_PASSWORD: ${SMTP_PROBE_PASSWORD:-}
+      SMTP_SCOPE_PASSWORD: ${SMTP_SCOPE_PASSWORD:-}
+      SMTP_PROBE_PASSWORD_MIN_LENGTH: ${SMTP_PROBE_PASSWORD_MIN_LENGTH:-}
+      SMTP_SCOPE_PASSWORD_MIN_LENGTH: ${SMTP_SCOPE_PASSWORD_MIN_LENGTH:-}
+      SMTP_PROBE_COOKIE_SECURE: '1'
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set your HTTPS origin, e.g. https://smtp.example.com}
+      TRUST_PROXY: '1'
+      ALLOW_SEND: ${ALLOW_SEND:-0}
+      SMTP_ALLOWED_HOSTS: ${SMTP_ALLOWED_HOSTS:-}
+      SMTP_SEND_ALLOWED_HOSTS: ${SMTP_SEND_ALLOWED_HOSTS:-}
+      SMTP_SEND_ALLOWED_RECIPIENTS: ${SMTP_SEND_ALLOWED_RECIPIENTS:-}
+      SMTP_ALLOWED_PORTS: '25,465,587,2525,8465,443'
+    networks:
+      - proxy
+networks:
+  proxy:
+    external: true
+    name: ${NPM_NETWORK:-proxied}

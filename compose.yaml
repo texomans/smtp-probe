@@ -1,0 +1,34 @@
+# LOCAL DEVELOPER BUILD: loopback only, not exposed to the Internet.
+name: smtp-probe-local
+services:
+  app:
+    build: .
+    image: smtp-probe:local
+    container_name: smtp-probe-local
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 1.0
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      SMTP_PROBE_PASSWORD: ${SMTP_PROBE_PASSWORD:-}
+      SMTP_SCOPE_PASSWORD: ${SMTP_SCOPE_PASSWORD:-}
+      SMTP_PROBE_PASSWORD_MIN_LENGTH: ${SMTP_PROBE_PASSWORD_MIN_LENGTH:-}
+      SMTP_SCOPE_PASSWORD_MIN_LENGTH: ${SMTP_SCOPE_PASSWORD_MIN_LENGTH:-}
+      SMTP_PROBE_COOKIE_SECURE: '0'
+      PUBLIC_ORIGIN: ''
+      TRUST_PROXY: '0'
+      ALLOW_SEND: '0'
+      SMTP_ALLOWED_HOSTS: ${SMTP_ALLOWED_HOSTS:-}
+      SMTP_SEND_ALLOWED_HOSTS: ${SMTP_SEND_ALLOWED_HOSTS:-}
+      SMTP_SEND_ALLOWED_RECIPIENTS: ${SMTP_SEND_ALLOWED_RECIPIENTS:-}
+      SMTP_ALLOWED_PORTS: '25,465,587,2525,8465,443'
+    ports:
+      - '127.0.0.1:3088:3000'

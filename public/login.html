@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>SMTP Probe — Access</title>
+<meta name="description" content="Enter your SMTP Probe access password." />
+<link rel="stylesheet" href="/app.css" />
+<script src="/login.js" defer></script>
+</head>
+<body>
+<div class="shell login-shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div><div class="brand-name">SMTP <em>Probe</em></div><span class="version">v__SMTP_PROBE_VERSION__</span></div>
+    <div class="right-head"><span class="pill"><span class="green-dot"></span>SELF-HOSTED</span></div>
+  </header>
+  <main class="login-center">
+    <div class="login-card card">
+      <div class="login-icon" aria-hidden="true">&#9679;</div>
+      <div class="eyebrow">PRIVATE DIAGNOSTICS CONSOLE</div>
+      <h1>Access <span>SMTP Probe.</span></h1>
+      <p>Enter the access password configured by your administrator. A successful sign-in grants an eight-hour session.</p>
+      <form id="login-form" autocomplete="on">
+        <label for="access-password">Access password</label>
+        <input id="access-password" name="password" type="password" minlength="1" required autocomplete="current-password" placeholder="Enter access password" />
+        <p id="login-error" class="login-error hidden" role="alert"></p>
+        <button class="primary-btn" id="login-button" type="submit"><span>Unlock diagnostics</span><span aria-hidden="true">&rarr;</span></button>
+      </form>
+      <div class="login-hint">Your password is only used to establish a server-side session. It is not stored in your browser or included in SMTP reports.</div>
+    </div>
+  </main>
+  <footer class="footer"><div>&copy; 2026 SMTP Probe contributors &middot; MIT-licensed &middot; Proudly vibe-coded with ChatGPT &#128526;</div><div>Independently inspired by <a href="https://smtptester.org" target="_blank" rel="noopener noreferrer">SMTPTester.org</a>. Not affiliated.</div></footer>
+</div>
+</body>
+</html>

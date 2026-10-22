@@ -1,0 +1,8 @@
+# Optional local-only send test. NOT for the public Komodo stack.
+# Requires a nonempty SMTP_SEND_ALLOWED_RECIPIENTS policy and test-only credentials.
+services:
+  app:
+    environment:
+      ALLOW_SEND: '1'
+      SMTP_SEND_ALLOWED_HOSTS: ${SMTP_SEND_ALLOWED_HOSTS:-}
+      SMTP_SEND_ALLOWED_RECIPIENTS: ${SMTP_SEND_ALLOWED_RECIPIENTS:?Define an exact recipient allowlist}

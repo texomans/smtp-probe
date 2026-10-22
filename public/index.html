@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>SMTP Probe — See the full conversation</title>
+<meta name="description" content="Independent open-source SMTP protocol and TLS diagnostics. Docker ready." />
+<link rel="stylesheet" href="/app.css" />
+<script src="/app.js" defer></script>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div><div class="brand-name">SMTP <em>Probe</em></div><span class="version">v__SMTP_PROBE_VERSION__</span></div>
+    <div class="right-head"><span class="pill"><span class="green-dot"></span>SELF-HOSTED</span><span class="pill outline">OPEN SOURCE</span><button id="logout-btn" class="logout-btn" type="button" title="End session">Log out</button></div>
+  </header>
+  <section class="hero">
+    <div class="eyebrow">SMTP DIAGNOSTICS · PROTOCOL ANALYSIS</div>
+    <h1>See the <span>whole conversation.</span></h1>
+    <p>Connect, negotiate TLS, inspect server capabilities, and verify authentication. Every protocol step explained—credentials never displayed.</p>
+  </section>
+  <main class="workspace">
+    <div class="settings card">
+      <div class="card-heading"><div><div class="small-label">01 / CONNECTION</div><h2>Server settings</h2></div><span class="glyph">⌁</span></div>
+      <form id="test-form" autocomplete="off">
+      <label for="host">SMTP hostname</label>
+      <input id="host" name="host" type="text" required placeholder="Enter SMTP hostname" spellcheck="false" autocomplete="off" />
+      <div class="two-cols"><div><label for="port">Port</label><input id="port" name="port" type="number" min="1" max="65535" required value="587" /></div>
+      <div><label for="tlsMode">Connection</label><select name="tlsMode" id="tlsMode"><option value="starttls">STARTTLS</option><option value="implicit">Implicit TLS</option><option value="none">No TLS (EHLO only)</option></select></div></div>
+      <div class="field-note">TLS certificate validation is always enforced.</div>
+      <div class="rule"></div>
+      <div class="section-title">SMTP Authentication <span>Optional for verify</span></div>
+      <label for="username">Username</label><input id="username" name="username" type="text" autocomplete="off" placeholder="username" />
+      <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="••••••••••••" />
+      <label for="authMethod">Mechanism</label><select name="authMethod" id="authMethod"><option value="auto">Auto-detect</option><option value="plain">AUTH PLAIN</option><option value="login">AUTH LOGIN</option><option value="cram-md5">CRAM-MD5</option></select>
+      <p class="secret-note">🔒 Credentials are used only in memory for the test. They're never stored or included in the transcript.</p>
+      </form>
+    </div>
+    <div class="actions card">
+      <div class="card-heading"><div><div class="small-label">02 / OPERATIONS</div><h2>Run a test</h2></div><span class="glyph">↗</span></div>
+      <div class="mode-box"><div class="mode-icon">◎</div><div><h3>Connection &amp; authentication</h3><p>Inspect EHLO, negotiate TLS, and optionally verify credentials. No email sent.</p></div></div>
+      <button class="primary-btn" id="verify-btn" type="button">Verify connection <span>→</span></button>
+      <div class="rule"></div>
+      <div class="section-title">Test email <span id="send-flag">Disabled in private preview</span></div>
+      <label for="from">From address</label><input id="from" type="email" maxlength="254" required placeholder="sender@example.com" />
+      <label for="to">To address (one recipient)</label><input id="to" type="email" maxlength="254" required placeholder="recipient@example.com" />
+      <label for="subject">Subject</label><input id="subject" type="text" value="SMTP Probe diagnostic test" maxlength="160" />
+      <label for="message">Message</label><textarea id="message" maxlength="8000" required rows="4">This test email was sent with SMTP Probe.</textarea>
+      <button class="secondary-btn" id="send-btn" type="button" disabled>Send test email <span>→</span></button>
+      <div id="notice" class="notice">SMTP tests are subject to connection limits. Email sending is disabled unless explicitly approved by the administrator.</div>
+    </div>
+    <div class="results card">
+      <div class="card-heading"><div><div class="small-label">03 / DIAGNOSTICS</div><h2>Live transcript</h2></div><div class="report-actions"><button class="copy-btn" id="copy-btn" type="button" title="Copy redacted transcript">Copy report</button><button class="copy-btn" id="download-btn" type="button" title="Save redacted transcript as text">Download</button></div></div>
+      <div class="status" id="status"><span class="status-dot"></span><span id="status-text">Ready to connect</span><span id="duration"></span></div>
+      <div id="console" class="console" aria-live="polite" aria-label="SMTP transcript"><div class="empty-console"><div class="terminal-icon">&gt;_</div><strong>Nothing to show yet</strong><span>Configure a connection and run a test.</span></div></div>
+      <div id="tls-details" class="tls-details hidden"></div>
+      <div id="delivery-details" class="tls-details hidden"></div>
+      <div id="capabilities" class="capabilities hidden"></div>
+      <div class="results-foot">Live transcript • Authentication data automatically redacted • No saved passwords</div>
+    </div>
+  </main>
+  <footer class="footer"><div>© 2026 SMTP Probe contributors · MIT-licensed · Proudly vibe-coded with ChatGPT 😎</div><div>Independently inspired by <a href="https://smtptester.org" target="_blank" rel="noopener noreferrer">SMTPTester.org</a>. Not affiliated.</div></footer>
+</div>
+</body>
+</html>

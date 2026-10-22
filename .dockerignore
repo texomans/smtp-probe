@@ -1,0 +1,12 @@
+.git
+.github
+node_modules/
+*.log
+.env
+.env.*
+README.md
+docs/
+test/
+scripts/
+coverage/
+__pycache__/
