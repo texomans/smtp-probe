@@ -1,4 +1,4 @@
-# Optional local-only send test. NOT for the public Komodo stack.
+# Optional local-only send test. NOT for public deployments.
 # Requires a nonempty SMTP_SEND_ALLOWED_RECIPIENTS policy and test-only credentials.
 services:
   app:

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Passive public NPM gateway check: no password, SMTP credentials or test email.
-const origin = process.argv[2] || 'https://smtpprobe.texomans.com';
+// Passive HTTPS reverse-proxy gateway check: no password, SMTP credentials or test email.
+const origin = process.argv[2];
 let failures = 0;
 if (!/^https:\/\/[^/]+$/.test(origin)) {
   console.error('Please pass an HTTPS origin with no trailing slash.');

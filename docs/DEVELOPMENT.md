@@ -1,23 +1,23 @@
-# Developer quickstart
+# Development
 
-Prerequisites: Node.js >=22; Docker for container builds. Node 24 is used in CI.
+Use Node.js >=22 (CI uses 24). Tests generate temporary TLS fixtures and local mock SMTP servers:
 
 ```bash
 npm run check
 npm test
 ```
 
-`npm test` generates ephemeral TLS fixtures (ignored by Git), then exercises SMTP greeting/EHLO/STARTTLS, TLS certificates, AUTH, sending, safety checks, browser sessions, CSRF and rate limiting. The test suite uses synthetic credentials and local mock SMTP endpoints.
-
-Run a private/local instance:
+Run source directly with a **test-only** password:
 
 ```bash
-cp .env.example .env
-# Set SMTP_PROBE_PASSWORD in the local .env; no passwords are shipped.
-docker compose up -d --build
-curl -fsS http://127.0.0.1:3088/healthz
+SMTP_PROBE_PASSWORD='a-unique-long-test-passphrase' SMTP_PROBE_COOKIE_SECURE=0 ALLOW_SEND=0 HOST=127.0.0.1 node src/server.mjs
 ```
 
-The app uses the version in `package.json` for both `/api/info` and the HTML label. For new versions, update only that version and package/release docs; avoid hardcoded version labels in UI.
+Or build a local image manually (regular `docker compose up -d` pulls a **published** image):
 
-Do not commit artifacts containing private/test .env files. Prefer PRs with test coverage for networking changes.
+```bash
+docker build -t smtp-probe:dev .
+SMTP_PROBE_IMAGE=smtp-probe:dev docker compose up -d
+```
+
+The UI and API both read their version from `package.json`. Use separate test and production passwords. Never commit `.env`, TLS fixture private keys, SMTP credentials or client transcripts.

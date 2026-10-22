@@ -19,7 +19,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: '3000'
-      SMTP_PROBE_PASSWORD: ${SMTP_PROBE_PASSWORD:?Set a dedicated staging password in Komodo}
+      SMTP_PROBE_PASSWORD: ${SMTP_PROBE_PASSWORD:?Set a dedicated staging password}
       SMTP_PROBE_PASSWORD_MIN_LENGTH: ${SMTP_PROBE_PASSWORD_MIN_LENGTH:-15}
       SMTP_PROBE_COOKIE_SECURE: '0'
       PUBLIC_ORIGIN: ''

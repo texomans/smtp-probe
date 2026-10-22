@@ -8,7 +8,7 @@ import sys
 import urllib.error
 import urllib.request
 
-origin = sys.argv[1] if len(sys.argv) > 1 else 'https://smtpprobe.texomans.com'
+origin = sys.argv[1] if len(sys.argv) > 1 else sys.exit('Usage: https-auth-smoke-test.py https://smtp.example.com')
 if not origin.startswith('https://') or origin.endswith('/'):
     sys.exit('Provide a valid HTTPS origin without a trailing slash.')
 expected_send = os.environ.get('SMTP_PROBE_EXPECT_SEND', '0') == '1'

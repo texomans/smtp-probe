@@ -12,7 +12,7 @@ async function unusedPort() {
 test('HTTPS proxy mode sets a __Host- Secure cookie and validates the configured origin',async t=>{
   const port=await unusedPort();
   const base=`http://127.0.0.1:${port}`;
-  const publicOrigin='https://smtpprobe.texomans.com';
+  const publicOrigin='https://smtp.example.org';
   const password='Random-Only-Test-Secret-For-Proxy-123456';
   const processHandle=spawn(process.execPath,['src/server.mjs'],{
     cwd:process.cwd(),
@@ -28,9 +28,9 @@ test('HTTPS proxy mode sets a __Host- Secure cookie and validates the configured
   }
   assert.equal(ready,true);
   const payload=JSON.stringify({password});
-  const badOrigin=await fetch(`${base}/api/login`,{method:'POST',headers:{'content-type':'application/json',origin:'https://evil.example',host:'smtpprobe.texomans.com'},body:payload});
+  const badOrigin=await fetch(`${base}/api/login`,{method:'POST',headers:{'content-type':'application/json',origin:'https://evil.example',host:'smtp.example.org'},body:payload});
   assert.equal(badOrigin.status,403);
-  const good=await fetch(`${base}/api/login`,{method:'POST',headers:{'content-type':'application/json',origin:publicOrigin,host:'smtpprobe.texomans.com'},body:payload});
+  const good=await fetch(`${base}/api/login`,{method:'POST',headers:{'content-type':'application/json',origin:publicOrigin,host:'smtp.example.org'},body:payload});
   assert.equal(good.status,200);
   const cookie=good.headers.get('set-cookie');
   assert.match(cookie,/__Host-smtp_probe_sid=/);

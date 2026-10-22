@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Read-only HTTPS/NPM smoke checks; never asks for secrets or sends email."""
+"""Read-only HTTPS reverse-proxy checks; never asks for secrets or sends email."""
 import json
 import sys
 import urllib.error
 import urllib.request
 
-ORIGIN = sys.argv[1] if len(sys.argv) > 1 else 'https://smtpprobe.texomans.com'
+ORIGIN = sys.argv[1] if len(sys.argv) > 1 else sys.exit('Usage: public-proxy-check.py https://smtp.example.com')
 if not ORIGIN.startswith('https://') or ORIGIN.endswith('/'):
     sys.exit('Pass a full HTTPS origin without a trailing slash.')
 failures = 0

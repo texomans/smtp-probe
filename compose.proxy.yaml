@@ -1,7 +1,5 @@
-# Public HTTPS deployment through a reverse proxy (e.g. NPM).
-# Komodo Stack: file source from GitHub, Compose path compose.komodo.yaml.
-# Supply secrets through Komodo Stack Environment / Secrets, NEVER the repository.
-# No exposed host ports; the reverse proxy must share NPM_NETWORK.
+# Optional HTTPS deployment behind any trusted container reverse proxy.
+# Requires an existing Docker network and an HTTPS origin; publishes no host ports.
 name: smtp-probe
 services:
   app:
@@ -21,9 +19,7 @@ services:
       NODE_ENV: production
       PORT: '3000'
       SMTP_PROBE_PASSWORD: ${SMTP_PROBE_PASSWORD:-}
-      SMTP_SCOPE_PASSWORD: ${SMTP_SCOPE_PASSWORD:-}
-      SMTP_PROBE_PASSWORD_MIN_LENGTH: ${SMTP_PROBE_PASSWORD_MIN_LENGTH:-}
-      SMTP_SCOPE_PASSWORD_MIN_LENGTH: ${SMTP_SCOPE_PASSWORD_MIN_LENGTH:-}
+      SMTP_PROBE_PASSWORD_MIN_LENGTH: ${SMTP_PROBE_PASSWORD_MIN_LENGTH:-15}
       SMTP_PROBE_COOKIE_SECURE: '1'
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set your HTTPS origin, e.g. https://smtp.example.com}
       TRUST_PROXY: '1'
@@ -37,4 +33,4 @@ services:
 networks:
   proxy:
     external: true
-    name: ${NPM_NETWORK:-proxied}
+    name: ${SMTP_PROBE_PROXY_NETWORK:?Specify an existing Docker proxy network}

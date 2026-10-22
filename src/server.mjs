@@ -12,11 +12,9 @@ import { createAuthManager, parsePasswordMinLength } from './auth.mjs';
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
-// New SMTP_PROBE_* variables take precedence, but legacy SMTP_SCOPE_*
-// variables remain supported for operators migrating older installations.
-const ACCESS_PASSWORD = process.env.SMTP_PROBE_PASSWORD || process.env.SMTP_SCOPE_PASSWORD;
-const PASSWORD_MIN_SETTING = process.env.SMTP_PROBE_PASSWORD_MIN_LENGTH || process.env.SMTP_SCOPE_PASSWORD_MIN_LENGTH || '15';
-const COOKIE_SECURE_SETTING = process.env.SMTP_PROBE_COOKIE_SECURE ?? process.env.SMTP_SCOPE_COOKIE_SECURE ?? '1';
+const ACCESS_PASSWORD = process.env.SMTP_PROBE_PASSWORD;
+const PASSWORD_MIN_SETTING = process.env.SMTP_PROBE_PASSWORD_MIN_LENGTH || '15';
+const COOKIE_SECURE_SETTING = process.env.SMTP_PROBE_COOKIE_SECURE ?? '1';
 const REQUEST_TIMEOUT_MS = 45000;
 const MAX_REQUEST_BYTES = 16000;
 const MAX_ACTIVE = 3;
