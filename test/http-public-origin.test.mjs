@@ -39,5 +39,5 @@ test('HTTPS proxy mode sets a __Host- Secure cookie and validates the configured
   assert.match(cookie,/; Secure/);
   assert.match(cookie,/; HttpOnly/);
   assert.match(cookie,/; SameSite=Strict/);
-  assert.equal((await (await fetch(`${base}/api/info`,{headers:{cookie:cookie.split(';')[0]}})).json()).version,'0.2.0-beta.1');
+  assert.equal((await (await fetch(`${base}/api/info`,{headers:{cookie:cookie.split(';')[0]}})).json()).version,EXPECTED_VERSION);
 });
