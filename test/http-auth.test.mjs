@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+const EXPECTED_VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
@@ -58,10 +60,10 @@ test('HTTP endpoints require session authentication plus CSRF; logout revokes ac
   const livePage=await (await fetch(base,{headers:{cookie}})).text();
   assert.match(livePage,/See the/);
   const info=await (await fetch(`${base}/api/info`,{headers:{cookie}})).json();
-  assert.equal(info.version,'0.2.0-beta.2');
+  assert.equal(info.version,EXPECTED_VERSION);
   assert.equal(info.name,'SMTP Probe');
-  assert.match(loginPage,/v0\.2\.0-beta\.1/);
-  assert.match(livePage,/v0\.2\.0-beta\.1/);
+  assert.ok(loginPage.includes('v' + EXPECTED_VERSION));
+  assert.ok(livePage.includes('v' + EXPECTED_VERSION));
   assert.doesNotMatch(loginPage,/__SMTP_PROBE_VERSION__/);
   assert.equal(info.sendEnabled,false);
   const missingCsrf=await fetch(`${base}/api/test`,{method:'POST',headers:{cookie,'content-type':'application/json'},body:'{}'});
