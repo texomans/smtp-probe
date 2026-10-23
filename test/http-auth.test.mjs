@@ -35,7 +35,10 @@ test('HTTP endpoints require session authentication plus CSRF; logout revokes ac
     stdio:['ignore','pipe','pipe'],
   });
   t.after(()=>{if(child.exitCode===null) child.kill('SIGTERM');});
+  let stdout='';
+  child.stdout.on('data',chunk=>{stdout+=chunk.toString('utf8');});
   await waitUntilHealthy(base,child);
+  assert.ok(stdout.includes(`SMTP Probe v${EXPECTED_VERSION} listening on 127.0.0.1:${port} (send enabled: false)`),stdout);
   const noAuth=await fetch(`${base}/api/test`,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
   assert.equal(noAuth.status,401);
   const noInfo=await fetch(`${base}/api/info`);

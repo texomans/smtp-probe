@@ -1,4 +1,4 @@
-# Push a Git tag such as v0.2.0-beta.1 to publish GHCR images.
+# Push a Git tag matching package.json to publish GHCR images.
 # Only tags publish. Pull requests and main branch never push container images.
 name: Publish GHCR image
 on:
@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
+      - name: Verify release tag matches package.json
+        run: node scripts/check-release-version.mjs "$GITHUB_REF_NAME"
       - name: Syntax checks
         run: npm run check
       - name: Automated tests
@@ -35,6 +37,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
           tags: |
             type=ref,event=tag
             type=raw,value=beta,enable=${{ contains(github.ref, '-beta.') }}
