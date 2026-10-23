@@ -196,4 +196,4 @@ const server = http.createServer(async (req,res) => {
 server.requestTimeout = 20000;
 server.headersTimeout = 10000;
 server.keepAliveTimeout = 5000;
-server.listen(PORT, HOST, () => console.log(`SMTP Probe v0.2.0-beta.1 listening on ${HOST}:${PORT} (send enabled: ${process.env.ALLOW_SEND === '1'})`));
+server.listen(PORT, HOST, () => console.log(`SMTP Probe v${APP_VERSION} listening on ${HOST}:${PORT} (send enabled: ${process.env.ALLOW_SEND === '1'})`));
