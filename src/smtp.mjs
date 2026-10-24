@@ -2,6 +2,7 @@ import net from 'node:net';
 import tls from 'node:tls';
 import { createHmac, randomBytes } from 'node:crypto';
 import { redact } from './safety.mjs';
+import { gradeConnection } from './grading.mjs';
 
 const GREETING_TIMEOUT_MS = 12000;
 const IO_TIMEOUT_MS = 12000;
@@ -169,6 +170,8 @@ export async function runSmtpTest(config, target, emit, signal) {
   let stage = 'connect';
   let tlsInfo = null;
   let capabilities = [];
+  const evidence = {};
+  const finish = result => ({...result, grading:gradeConnection(config, result, evidence)});
   const authBlob = config.username && config.password ? Buffer.from(`\0${config.username}\0${config.password}`).toString('base64') : '';
   const secrets = [config.username, config.password, authBlob];
   const record = (kind, detail) => emit({type: 'transcript', kind, text: redact(detail, secrets), time: new Date().toISOString()});
@@ -194,32 +197,42 @@ export async function runSmtpTest(config, target, emit, signal) {
     stageEvent('connect', `Connecting to ${config.host}:${config.port} (${target.address})`);
     record('info', `Target: ${config.host}:${config.port}, resolved IP: ${target.address}`);
     socket = await connectTcp(target, config.port);
+    evidence.tcp = 'pass';
     reader = new ResponseReader(socket);
     if (config.tlsMode === 'implicit') {
       stageEvent('tls', 'Negotiating implicit TLS');
       reader.detach();
       const upgraded = await upgradeTls(socket, config.host);
-      socket = upgraded.socket; tlsInfo = upgraded.details;
+      socket = upgraded.socket; tlsInfo = upgraded.details; evidence.tls = 'pass';
       reader = new ResponseReader(socket);
       record('tls', `TLS established: ${tlsInfo.protocol} · ${tlsInfo.cipher} · certificate verified`);
     }
     stageEvent('greeting', 'Reading SMTP banner');
     ensureResponse(await response(), [220], 'SMTP banner');
+    evidence.greeting = 'pass';
     stageEvent('ehlo', 'Inspecting SMTP capabilities');
     let ehlo = await command('EHLO smtp-probe.local', {description:'EHLO'});
     capabilities = ehlo.lines.map(x => redact(x.slice(4), secrets));
+    evidence.ehlo = 'pass';
+    if (!tlsInfo) {
+      evidence.starttls = config.tlsMode === 'starttls' ? hasCapability(ehlo.lines, 'STARTTLS') : undefined;
+      evidence.plaintextAuth = parseAuthMechanisms(ehlo.lines).length > 0;
+    }
     if (config.tlsMode === 'starttls') {
       if (!hasCapability(ehlo.lines, 'STARTTLS')) throw new SMTPError('STARTTLS is not advertised; refusing to continue without encryption.', null, stage);
       stageEvent('tls', 'Upgrading with STARTTLS');
       await command('STARTTLS', {allow:[220], description:'STARTTLS'});
       reader.detach();
       const upgraded = await upgradeTls(socket, config.host);
-      socket = upgraded.socket; tlsInfo = upgraded.details;
+      socket = upgraded.socket; tlsInfo = upgraded.details; evidence.tls = 'pass';
       reader = new ResponseReader(socket);
       record('tls', `TLS established: ${tlsInfo.protocol} · ${tlsInfo.cipher} · certificate verified`);
       stageEvent('ehlo', 'Rechecking SMTP capabilities after STARTTLS');
       // RFC 3207: pre-TLS capabilities MUST be discarded and EHLO repeated.
+      evidence.ehlo = 'not-tested';
+      capabilities = [];
       ehlo = await command('EHLO smtp-probe.local');
+      evidence.ehlo = 'pass';
       capabilities = ehlo.lines.map(x => redact(x.slice(4), secrets));
     }
     if (config.username) {
@@ -243,6 +256,7 @@ export async function runSmtpTest(config, target, emit, signal) {
         const answer = Buffer.from(`${config.username} ${mac}`).toString('base64');
         await command(answer, {display:'[REDACTED AUTH RESPONSE]', allow:[235], description:'AUTH CRAM-MD5 challenge'});
       }
+      evidence.auth = 'pass';
       record('info', `Authentication succeeded (${mechanism.toUpperCase()})`);
     }
     if (config.mode === 'send') {
@@ -256,7 +270,8 @@ export async function runSmtpTest(config, target, emit, signal) {
       const accepted = await response();
       ensureResponse(accepted, [250], 'Message submission');
       stageEvent('complete', 'SMTP server accepted the message for delivery');
-      return {
+      evidence.submission = 'pass';
+      return finish({
         ok:true,
         message:'SMTP server accepted the test email for delivery (inbox delivery not yet confirmed).',
         messageId,
@@ -268,14 +283,16 @@ export async function runSmtpTest(config, target, emit, signal) {
         },
         tls:tlsInfo,
         capabilities,
-      };
+      });
     }
     stageEvent('complete', config.username ? 'SMTP credentials verified' : 'SMTP server capabilities inspected');
-    return {ok:true, message:config.username ? 'SMTP connection, TLS, and credentials verified.' : 'SMTP connection and capabilities verified (no authentication attempted).', tls:tlsInfo, capabilities};
+    return finish({ok:true, message:config.username ? 'SMTP connection, TLS, and credentials verified.' : 'SMTP connection and capabilities verified (no authentication attempted).', tls:tlsInfo, capabilities});
   } catch (err) {
+    const failedCheck = {connect:'tcp',greeting:'greeting',ehlo:'ehlo',tls:'tls',auth:'auth',send:'submission'}[stage];
+    if (failedCheck && evidence[failedCheck] !== 'pass') evidence[failedCheck] = 'fail';
     const message = redact(err.message || String(err), secrets);
     record('error', `ERROR: ${message}`);
-    return {ok:false, message, smtpCode:err.smtpCode || null, stage:err.stage || stage, tls:tlsInfo, capabilities};
+    return finish({ok:false, message, smtpCode:err.smtpCode || null, stage:err.stage || stage, tls:tlsInfo, capabilities});
   } finally {
     if (signal) signal.removeEventListener('abort', onAbort);
     if (socket && !socket.destroyed) {

@@ -41,6 +41,9 @@ test('Reports the real banner and a multiline EHLO conversation',async()=>{
   assert.ok(events.some(e=>e.type==='transcript' && e.text?.includes('250-STARTTLS')));
   assert.ok(events.some(e=>e.type==='transcript' && e.text?.includes('EHLO smtp-probe.local')));
   assert.ok(result.capabilities.includes('STARTTLS'));
+  assert.equal(result.grading.grade,'F');
+  assert.equal(result.grading.connectivity.status,'pass');
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='tls').status,'not-tested');
   assert.ok(mock.actions.some(x=>x.startsWith('EHLO')));
  } finally {await new Promise(resolve=>mock.server.close(resolve));}
 });
@@ -52,5 +55,21 @@ test('Fails closed when STARTTLS is not advertised',async()=>{
   const result=await runSmtpTest({...cfg,tlsMode:'starttls',port:mock.port},target,event=>events.push(event));
   assert.equal(result.ok,false);
   assert.match(result.message,/STARTTLS is not advertised/);
+  assert.equal(result.grading.grade,'F');
+  assert.equal(result.grading.connectivity.status,'fail');
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='ehlo').status,'pass');
  } finally {await new Promise(resolve=>mock.server.close(resolve));}
+});
+
+
+test('refused TCP connection is a connectivity failure with security ungraded',async()=>{
+ const server=net.createServer();
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const port=server.address().port;
+ await new Promise(resolve=>server.close(resolve));
+ const result=await runSmtpTest({...cfg,tlsMode:'implicit',port},target,()=>{});
+ assert.equal(result.ok,false);
+ assert.equal(result.grading.grade,'N/A');
+ assert.equal(result.grading.connectivity.checks.find(x=>x.id==='tcp').status,'fail');
+ assert.equal(result.grading.connectivity.checks.find(x=>x.id==='tls').status,'not-tested');
 });

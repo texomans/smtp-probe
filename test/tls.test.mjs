@@ -39,7 +39,7 @@ function attachSmtpConversation(socket, activeTls, events, messages, options = {
       } else if(line.startsWith('AUTH PLAIN ')) {
         const auth = Buffer.from(line.slice('AUTH PLAIN '.length),'base64').toString('utf8');
         events.push('AUTH PLAIN');
-        socket.write(auth === '\0smtp-tester\0a-unique-secret-password' ? '235 2.7.0 Authenticated\r\n' : '535 5.7.8 Bad credentials\r\n');
+        socket.write(!options.rejectAuth && auth === '\0smtp-tester\0a-unique-secret-password' ? '235 2.7.0 Authenticated\r\n' : '535 5.7.8 Bad credentials\r\n');
       } else if(line === 'AUTH LOGIN') {
         loginStep=1; events.push('AUTH LOGIN'); socket.write('334 VXNlcm5hbWU6\r\n');
       } else if(loginStep===1) {
@@ -96,6 +96,9 @@ test('Implicit TLS: TLS certificate valid, AUTH PLAIN transcript redacted',async
   const {result,events}=await runClient(mock.port,'verify');
   assert.equal(result.ok,true,result.message);
   assert.equal(result.tls.authorized,true);
+  assert.ok(['A','B'].includes(result.grading.grade));
+  assert.ok(!JSON.stringify(result.grading).includes('a-unique-secret-password'));
+  assert.ok(!JSON.stringify(result.grading).includes('smtp-tester'));
   assert.match(result.tls.protocol,/TLSv1\.[23]/);
   assert.equal(result.tls.certificateChain[0].subject,'smtp.mock.example');
   const transcript=events.filter(e=>e.text).map(e=>e.text).join('\n');
@@ -114,6 +117,7 @@ test('Implicit TLS: single-recipient send completes after authentication',async(
   assert.ok(mock.events.includes('message received'));
   assert.equal(result.delivery.recipient,'recipient@example.net');
   assert.equal(result.delivery.smtpCode,250);
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='submission').status,'pass');
   assert.match(result.delivery.smtpResponse,/queued as ABC123/);
   assert.match(result.messageId,/smtp-probe\.local/);
   assert.equal(mock.messages.length,1);
@@ -158,6 +162,8 @@ test('TLS refuses a certificate valid for a different hostname',async()=>{
   const {result}=await runClient(mock.port,'verify',{host:'wrong.mock.example'});
   assert.equal(result.ok,false);
   assert.match(result.message,/TLS negotiation failed/i);
+  assert.equal(result.grading.grade,'F');
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='tls').status,'fail');
   assert.ok(!mock.events.includes('AUTH PLAIN'));
  } finally {await new Promise(resolve=>mock.server.close(resolve));}
 });
@@ -171,6 +177,9 @@ for (const rejectStage of ['mail','rcpt','data','accept']) {
       assert.equal(result.smtpCode, rejectStage==='data'||rejectStage==='accept' ? 554 : 550);
       assert.equal(result.stage,'send');
       assert.equal(result.delivery,undefined);
+      assert.ok(['A','B'].includes(result.grading.grade));
+      assert.equal(result.grading.connectivity.status,'fail');
+      assert.equal(result.grading.connectivity.checks.find(x=>x.id==='submission').status,'fail');
       assert.ok(events.some(e=>e.type==='transcript'&&e.kind==='error'));
       const transcript=events.filter(e=>e.text).map(e=>e.text).join('\n');
       assert.ok(!transcript.includes('a-unique-secret-password'));
@@ -180,3 +189,16 @@ for (const rejectStage of ['mail','rcpt','data','accept']) {
     } finally {await new Promise(resolve=>mock.server.close(resolve));}
   });
 }
+
+
+test('authentication rejection keeps transport grade and fails authentication connectivity',async()=>{
+ const mock=await startServer({rejectAuth:true});
+ try {
+  const {result}=await runClient(mock.port,'verify');
+  assert.equal(result.ok,false);
+  assert.equal(result.smtpCode,535);
+  assert.ok(['A','B'].includes(result.grading.grade));
+  assert.equal(result.grading.connectivity.status,'fail');
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='auth').status,'fail');
+ } finally {await new Promise(resolve=>mock.server.close(resolve));}
+});
