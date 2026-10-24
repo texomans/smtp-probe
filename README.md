@@ -15,6 +15,7 @@
 - Downloadable redacted reports and server acceptance receipts
 - Shared web-access password, protected sessions, CSRF, login throttling and test rate limits
 - Public-IP and SMTP-port restrictions; non-root, read-only container
+- SPF, DKIM and DMARC DNS diagnostics with potential identifier alignment and copy/download reports
 - No database, accounts, or third-party Node.js runtime packages
 
 ## Quick start — ordinary Docker Compose
@@ -41,7 +42,7 @@ ssh -N -L 3088:127.0.0.1:3088 user@your-server
 
 Then visit `http://127.0.0.1:3088` on your workstation.
 
-The default [compose.yaml](compose.yaml) **pulls a prebuilt image**, `ghcr.io/texomans/smtp-probe:v0.2.0-beta.1`. It does not compile source. Beta.2 is published; beta.3 grading is a source candidate until approved and tagged. The Compose image is a fallback: set `SMTP_PROBE_IMAGE` explicitly to select the release you want.
+The default [compose.yaml](compose.yaml) **pulls a prebuilt image**, `ghcr.io/texomans/smtp-probe:v0.2.0-beta.1`. It does not compile source. Select your approved release explicitly. Beta.4 DNS diagnostics require the beta.4 image once it is published. The Compose image is a fallback: set `SMTP_PROBE_IMAGE` explicitly to select the release you want.
 
 Prefer raw `docker run`? See [Docker installation](docs/DOCKER.md).
 
@@ -97,11 +98,15 @@ Available images: [GHCR](https://github.com/texomans/smtp-probe/pkgs/container/s
 
 Beta.3 adds a scorecard to completed SMTP tests and redacted report exports. Security and connectivity are separate: invalid credentials or rejected messages do not erase a validated TLS result. See [the grading policy](docs/GRADING.md) for rules, limitations and test scenarios.
 
+## Email authentication DNS diagnostics
+
+Use **SPF, DKIM & DMARC** below the SMTP workspace. Enter the visible From domain and optional MAIL FROM domain, DKIM signing domain and selectors. The tool inspects published DNS records; it does not send mail or verify actual message authentication. Copy/download exports are separate from SMTP reports. See [Email DNS diagnostics](docs/EMAIL-AUTH.md) for coverage, limits, DMARC discovery and live-test steps.
+
 ## Upcoming Features
 
 We'll check these off as they're released:
 
-- [ ] **SPF, DKIM, and DMARC diagnostics** — Inspect DNS records, identify configuration issues, and report alignment.
+- [x] **SPF, DKIM, and DMARC diagnostics** — Inspect DNS records, identify configuration issues, and report alignment.
 - [ ] **HTML email testing** — Compose HTML messages with a plain-text alternative, safely preview the HTML, and test multipart email delivery.
 - [ ] **OAuth2 / XOAUTH2 SMTP authentication** — Support modern authentication testing for providers such as Microsoft 365 and Google Workspace.
 - [ ] **Saved SMTP profiles** — Reuse server, port, encryption, and other nonsecret connection settings without saving passwords by default.

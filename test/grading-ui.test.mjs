@@ -40,3 +40,24 @@ test('new run clears previous grading and absent grading remains hidden',()=>{
   assert.ok(elements.get('grading').classes.has('hidden'));
   assert.equal(elements.get('grading').children.length,0);
 });
+
+
+test('DNS cards and report safely display DNS text with explicit scope and identities',()=>{
+ const {context,elements}=setup();
+ const malicious='<script>alert(1)</script>';
+ context.dnsFixture={schemaVersion:1,checkedAt:'2026-10-24T12:00:00Z',input:{fromDomain:'example.com',envelopeDomain:null,dkimDomain:null},scope:'DNS only; no message verification.',
+  spf:{domain:'example.com',status:'warning',lookupTerms:1,incomplete:false,findings:[],nodes:[{domain:'example.com',records:[malicious],findings:[]}]},
+  dmarc:{policyDomain:null,organizationalDomain:'example.com',policy:null,status:'error',discovery:[],findings:[{level:'error',message:malicious}]},
+  dkim:{domain:'example.com',status:'not-tested',selectors:[],findings:[]},alignment:[{kind:'SPF',status:'not-tested',detail:'No identity supplied.'}],queries:[{name:'example.com',status:'ok'}]};
+ vm.runInContext('showDnsResults(dnsFixture); lastDnsResult=dnsFixture;',context);
+ assert.ok(!elements.get('dns-results').classes.has('hidden'));
+ assert.ok(text(elements.get('dns-results')).includes(malicious));
+ const report=vm.runInContext('dnsReportText()',context);
+ assert.match(report,/SPF · example.com: WARNING/);
+ assert.match(report,/DKIM · example.com: NOT-TESTED/);
+ assert.match(report,/SPF: NOT-TESTED/);
+ assert.match(report,/MAIL FROM: Not supplied/);
+ assert.ok(report.includes(malicious));
+ vm.runInContext('showDnsResults(null);lastDnsResult=null;',context);
+ assert.ok(elements.get('dns-results').classes.has('hidden'));assert.equal(vm.runInContext('dnsReportText()',context),'');
+});

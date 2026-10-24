@@ -1,6 +1,7 @@
 import http from 'node:http';
 import net from 'node:net';
 import { createTestLimiter } from './rate-limit.mjs';
+import { createDnsHandler } from './dns-api.mjs';
 import { readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -163,6 +164,7 @@ function logout(req,res,session) {
   auth.logout(req.headers);
   return json(res,200,{ok:true},{'Set-Cookie':auth.clearCookie()});
 }
+const dnsDiagnostics = createDnsHandler({auth,checkOrigin,json,readJsonBody,requesterIp,limiter:testLimiter});
 const server = http.createServer(async (req,res) => {
   try {
     const url = new URL(req.url || '/', 'http://localhost');
@@ -186,6 +188,7 @@ const server = http.createServer(async (req,res) => {
       if (!session) return json(res,401,{error:'Authentication required.'});
       return json(res,200,{name:'SMTP Probe',version:APP_VERSION,sendEnabled:process.env.ALLOW_SEND === '1'});
     }
+    if (req.method === 'POST' && url.pathname === '/api/dns-diagnostics') return await dnsDiagnostics(req,res,session);
     if (req.method === 'POST' && url.pathname === '/api/test') return await apiTest(req,res,session);
     return json(res,404,{error:'Not found.'});
   } catch {

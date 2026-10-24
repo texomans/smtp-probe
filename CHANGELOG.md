@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.0-beta.4 — 2026-10-24
+
+- Added an independent SPF, DKIM and DMARC DNS diagnostic workspace and authenticated API.
+- Inspect SPF records, include/redirect chains, common syntax issues, cycles and static lookup-term warnings without claiming sender-IP authorization.
+- Inspect supplied DKIM selectors, delegated TXT keys, RSA/Ed25519 public-key parsing, strength, revocation and restrictions without claiming signature verification.
+- Discover direct/inherited DMARC policies and organizational boundaries using RFC 9989 tree walks; show strict/relaxed potential identity alignment and legacy-receiver caveats.
+- Added separate DNS copy/download reports, query traces and explicit unknown/not-tested states.
+- Bound DNS work by request deadlines, query/response/expansion limits, concurrency and independent rate limits. Added deterministic DNS protocol, parser, API, UI/export and container regression checks.
+- Deployment image pins remain unchanged; select the approved release explicitly using SMTP_PROBE_IMAGE.
+
 ## v0.2.0-beta.3 — 2026-10-24
 
 - Added a versioned security grading policy with explained TLS, certificate, cipher and expiry findings.

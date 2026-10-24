@@ -43,3 +43,11 @@ test('Windows expire and rates recover without application restart',()=>{
   advance(5001);
   assert.equal(limiter.allow(req('1.1.1.1','smtp.example.com','alice')),true);
 });
+
+
+test('DNS diagnostic quotas are independent from SMTP verify/send quotas',()=>{
+ const limiter=createTestLimiter();
+ for(let i=0;i<6;i++) assert.equal(limiter.allow({ip:'dns-client',host:'example.com',mode:'dns'}),true);
+ assert.equal(limiter.allow({ip:'dns-client',host:'example.com',mode:'dns'}),false);
+ assert.equal(limiter.allow({ip:'dns-client',host:'example.com',mode:'verify'}),true);
+});

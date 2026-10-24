@@ -27,3 +27,14 @@
 .grade-good{color:var(--mint)}.grade-warn{color:var(--warn)}.grade-fail{color:var(--danger)}.grade-unknown{color:var(--muted)}
 .grade-checks{list-style:none;padding:0;margin:12px 0}.grade-checks li{display:grid;grid-template-columns:80px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--edge-soft);color:#bacadd}
 .check-state{font:10px/1.8 var(--mono);color:var(--cyan)}.grade-scope{color:var(--muted);font-size:11px;margin:12px 0 0}
+
+/* Independent email-authentication DNS diagnostics */
+.dns-workspace{margin-top:18px}.dns-intro{color:var(--muted);font-size:12px;line-height:1.7}
+.dns-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.dns-run{max-width:280px}
+.dns-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:15px}
+.dns-result{padding:15px;border:1px solid var(--edge);border-radius:9px;min-width:0;overflow-wrap:anywhere;background:#0c1924;font-size:12px;line-height:1.7}
+.dns-result h3{font-size:14px;margin:0 0 10px}.dns-result ul{padding-left:19px;color:#b9cbdc}.dns-result li{margin:6px 0}
+.dns-record{display:block;white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;background:#080f19;padding:10px;border:1px solid var(--edge-soft);border-radius:7px;color:#c2d9e9;font:11px/1.7 var(--mono)}
+.dns-scope{padding:12px;border-left:3px solid var(--cyan);color:var(--muted);font-size:12px;line-height:1.7}.dns-queries{margin-top:14px;color:var(--muted);font:11px/1.7 var(--mono)}
+@media(max-width:1100px){.dns-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.dns-fields,.dns-result-grid{grid-template-columns:1fr}.dns-workspace>.card-heading{align-items:flex-start;flex-direction:column}.dns-run{max-width:none}}
