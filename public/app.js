@@ -60,7 +60,34 @@ function status(style,text,duration='') {
   $('status-text').textContent = text;
   $('duration').textContent = duration;
 }
+function showGrading(grading) {
+  const panel = $('grading');
+  panel.replaceChildren();
+  panel.classList.toggle('hidden', !grading);
+  if (!grading) return;
+  const heading = document.createElement('h3'); heading.textContent = 'SECURITY & CONNECTIVITY';
+  const overview = document.createElement('div'); overview.className = 'grade-overview';
+  const badge = document.createElement('strong');
+  badge.className = 'grade-badge ' + ({A:'grade-good', B:'grade-good', C:'grade-warn', F:'grade-fail'}[grading.grade] || 'grade-unknown');
+  badge.textContent = grading.grade;
+  const summary = document.createElement('p'); summary.textContent = grading.summary;
+  overview.append(badge, summary);
+  const connection = document.createElement('p');
+  connection.textContent = `Connectivity: ${grading.connectivity.status === 'pass' ? 'Passed' : 'Failed'} · Security policy v${grading.policyVersion}`;
+  const list = document.createElement('ul'); list.className = 'grade-checks';
+  for (const check of [...grading.connectivity.checks, ...grading.checks]) {
+    const item = document.createElement('li');
+    const state = document.createElement('span'); state.className = 'check-state';
+    state.textContent = ({pass:'PASS', fail:'FAIL', warn:'REVIEW', info:'INFO', unknown:'UNKNOWN', 'not-tested':'NOT TESTED'})[check.status] || 'UNKNOWN';
+    const detail = document.createElement('span');
+    detail.textContent = `${check.label}${check.detail ? ': ' + check.detail : ''}`;
+    item.append(state, detail); list.append(item);
+  }
+  const scope = document.createElement('p'); scope.className = 'grade-scope'; scope.textContent = grading.scope;
+  panel.append(heading, overview, connection, list, scope);
+}
 function showDetails(result) {
+  showGrading(result.grading);
   const tlsEl = $('tls-details');
   const deliveryEl = $('delivery-details');
   const capabilitiesEl = $('capabilities');
@@ -94,7 +121,7 @@ function showDetails(result) {
   }
   if (result.capabilities?.length) {
     capabilitiesEl.classList.remove('hidden');
-    const title = document.createElement('h3'); title.textContent='POST-HANDSHAKE SMTP CAPABILITIES';
+    const title = document.createElement('h3'); title.textContent='OBSERVED SMTP CAPABILITIES';
     const list = document.createElement('div'); list.className='cap-list';
     result.capabilities.slice(0,36).forEach(cap => {const el = document.createElement('span'); el.textContent=cap;list.append(el);});
     capabilitiesEl.append(title,list);
@@ -128,6 +155,7 @@ async function run(mode) {
   sendButton.disabled = true;
   transcript = [];
   lastResult = null;
+  showGrading(null);
   terminal.replaceChildren();
   $('tls-details').classList.add('hidden');
   $('delivery-details').classList.add('hidden');
@@ -179,6 +207,13 @@ function reportText() {
   if (lastResult) {
     lines.push(`Result: ${lastResult.ok?'PASS':'FAIL'}`);
     lines.push(`Outcome: ${lastResult.message||'N/A'}`);
+    if (lastResult.grading) {
+      const grading = lastResult.grading;
+      lines.push(`Security grade: ${grading.grade} (SMTP Probe policy v${grading.policyVersion})`, grading.summary);
+      lines.push(`Connectivity: ${grading.connectivity.status.toUpperCase()}`);
+      for (const check of [...grading.connectivity.checks, ...grading.checks]) lines.push(`${check.label}: ${check.status.toUpperCase()}${check.detail ? ' — ' + check.detail : ''}`);
+      lines.push(`Scope: ${grading.scope}`);
+    }
     if (lastResult.durationMs!=null) lines.push(`Duration: ${lastResult.durationMs} ms`);
     if (lastResult.delivery) {
       lines.push(`Recipient: ${lastResult.delivery.recipient}`);

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0-beta.3 — pending release
+
+- Added a versioned security grading policy with explained TLS, certificate, cipher and expiry findings.
+- Added separate TCP, banner, EHLO, TLS, authentication and submission outcomes with explicit untested states.
+- Added advertised authentication and SMTP capability summaries without treating advertisement as proof of acceptance.
+- Added the scorecard to the UI and redacted copy/download reports, including test scope and limitations.
+- Added grading policy, UI/export and SMTP integration regression coverage. Deployment image defaults remain unchanged pending publication and upgrade.
+
 ## v0.2.0-beta.2 — 2026-10-24
 
 - Startup logging now reads the application version from package.json, matching the API and UI.

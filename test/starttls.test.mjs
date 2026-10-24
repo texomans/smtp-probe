@@ -11,7 +11,7 @@ const base=path.dirname(fileURLToPath(import.meta.url));
 const key=await readFile(path.join(base,'fixtures','smtp-test.key'));
 const cert=await readFile(path.join(base,'fixtures','smtp-test.crt'));
 
-function startServer() {
+function startServer(options = {}) {
  return new Promise((resolve,reject)=>{
   const context=tls.createSecureContext({key,cert});
   const seen=[];
@@ -27,6 +27,7 @@ function startServer() {
         buffer=buffer.slice(index+1);
         if(line.startsWith('EHLO ')){
           seen.push(secured?'TLS EHLO':'PLAIN EHLO');
+          if (secured && options.rejectEhlo) {socket.write('500 EHLO rejected after TLS\r\n'); continue;}
           socket.write(secured ? '250-smtp.mock.example\r\n250 AUTH PLAIN LOGIN\r\n' : '250-smtp.mock.example\r\n250 STARTTLS\r\n');
         } else if(line === 'STARTTLS' && !secured) {
           seen.push('STARTTLS');
@@ -81,7 +82,25 @@ test('STARTTLS clears and re-queries capabilities; auth occurs only after TLS',a
   assert.ok(mock.seen.includes('AUTH'));
   assert.deepEqual(mock.seen.slice(0,4),['PLAIN EHLO','STARTTLS','TLS EHLO','AUTH']);
   assert.equal(result.tls.authorized,true);
+  assert.ok(['A','B'].includes(result.grading.grade));
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='tls').status,'pass');
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='auth').status,'pass');
+  assert.match(result.grading.checks.find(x=>x.id==='auth-methods').detail,/PLAIN/);
   const text=events.filter(x=>x.text).map(x=>x.text).join('\n');
   assert.ok(!text.includes('a-unique-secret-password'));
+ } finally {await new Promise(resolve=>mock.server.close(resolve));}
+});
+
+
+test('failed post-STARTTLS EHLO does not reuse pre-TLS capabilities',async()=>{
+ const mock=await startServer({rejectEhlo:true});
+ try {
+  const {result}=await client(mock.port);
+  assert.equal(result.ok,false);
+  assert.deepEqual(result.capabilities,[]);
+  assert.ok(['A','B'].includes(result.grading.grade));
+  assert.equal(result.grading.connectivity.checks.find(x=>x.id==='ehlo').status,'fail');
+  assert.equal(result.grading.checks.find(x=>x.id==='auth-methods').status,'unknown');
+  assert.ok(!mock.seen.includes('AUTH'));
  } finally {await new Promise(resolve=>mock.server.close(resolve));}
 });

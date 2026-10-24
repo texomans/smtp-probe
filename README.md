@@ -41,7 +41,7 @@ ssh -N -L 3088:127.0.0.1:3088 user@your-server
 
 Then visit `http://127.0.0.1:3088` on your workstation.
 
-The default [compose.yaml](compose.yaml) **pulls a prebuilt image**, `ghcr.io/texomans/smtp-probe:v0.2.0-beta.1`. It does not compile source. The published beta is `beta.1`; source changes in `main` are prepared for `beta.2` and are not in the image until a new release tag is published.
+The default [compose.yaml](compose.yaml) **pulls a prebuilt image**, `ghcr.io/texomans/smtp-probe:v0.2.0-beta.1`. It does not compile source. Beta.2 is published; beta.3 grading is a source candidate until approved and tagged. The Compose image is a fallback: set `SMTP_PROBE_IMAGE` explicitly to select the release you want.
 
 Prefer raw `docker run`? See [Docker installation](docs/DOCKER.md).
 
@@ -93,6 +93,10 @@ The SMTP hostname input starts **blank**. Each send attempt supports one recipie
 
 Available images: [GHCR](https://github.com/texomans/smtp-probe/pkgs/container/smtp-probe), for `linux/amd64` and `linux/arm64`.
 
+## Security and connectivity grading
+
+Beta.3 adds a scorecard to completed SMTP tests and redacted report exports. Security and connectivity are separate: invalid credentials or rejected messages do not erase a validated TLS result. See [the grading policy](docs/GRADING.md) for rules, limitations and test scenarios.
+
 ## Upcoming Features
 
 We'll check these off as they're released:
@@ -102,7 +106,7 @@ We'll check these off as they're released:
 - [ ] **OAuth2 / XOAUTH2 SMTP authentication** — Support modern authentication testing for providers such as Microsoft 365 and Google Workspace.
 - [ ] **Saved SMTP profiles** — Reuse server, port, encryption, and other nonsecret connection settings without saving passwords by default.
 - [ ] **Email attachments** — Send test messages with attachments under explicit file-size and type restrictions.
-- [ ] **SMTP security and connectivity grading** — Summarize TLS, certificate validation, supported authentication methods, and SMTP capabilities in an easy-to-read scorecard.
+- [x] **SMTP security and connectivity grading** — Summarize TLS, certificate validation, supported authentication methods, and SMTP capabilities in an easy-to-read scorecard.
 
 ## Security
 
