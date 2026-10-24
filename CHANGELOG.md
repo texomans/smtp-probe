@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0-beta.3 — pending release
+## v0.2.0-beta.3 — 2026-10-24
 
 - Added a versioned security grading policy with explained TLS, certificate, cipher and expiry findings.
 - Added separate TCP, banner, EHLO, TLS, authentication and submission outcomes with explicit untested states.
