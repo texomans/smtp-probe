@@ -243,3 +243,87 @@ $('tlsMode').addEventListener('change',()=>{
   if (mode==='implicit' && $('port').value==='587') $('port').value='465';
   if (mode==='starttls' && $('port').value==='465') $('port').value='587';
 });
+
+
+// DNS diagnostics use their own input snapshot and report, separate from SMTP credentials.
+let lastDnsResult = null;
+let dnsBusy = false;
+function dnsSections(result) {
+  const sections = [{title:`SPF · ${result.spf.domain}`,status:result.spf.status,
+    details:[`Static DNS-causing terms: ${result.spf.lookupTerms} (not an SPF sender-IP verdict)`, result.input.envelopeDomain ? 'Inspecting the supplied MAIL FROM domain.' : 'MAIL FROM not supplied: inspecting SPF at the From domain; SPF alignment not tested.', ...(result.spf.incomplete ? ['Inspection incomplete; see lookup warnings.'] : [])],
+    records:result.spf.nodes.flatMap(node=>node.records.map(record=>`${node.domain}: ${record}`)),
+    findings:[...result.spf.findings,...result.spf.nodes.flatMap(node=>node.findings.map(f=>({...f,message:`${node.domain}: ${f.message}`})))]}];
+  const dmarc=result.dmarc, policy=dmarc.policy;
+  sections.push({title:'DMARC',status:dmarc.status,
+    details:[`Policy domain: ${dmarc.policyDomain || 'Not established'}`,`Organizational domain (RFC 9989): ${dmarc.organizationalDomain || 'Unknown'}`,
+      ...(policy ? [`Published p: ${policy.direct}`,`Existing subdomains: ${policy.existingSubdomain}; nonexistent subdomains: ${policy.nonexistentSubdomain}`,`Alignment modes: SPF ${policy.aspf==='s'?'strict':'relaxed'} · DKIM ${policy.adkim==='s'?'strict':'relaxed'}`,`Test mode: ${policy.testMode?'Yes — reduced enforcement requested':'No'}`] : [])],
+    records:dmarc.discovery.flatMap(node=>node.records.map(record=>`${node.domain}: ${record}`)),findings:dmarc.findings});
+  if (!result.dkim.selectors.length) sections.push({title:`DKIM · ${result.dkim.domain}`,status:'not-tested',details:[],records:[],findings:result.dkim.findings});
+  for (const key of result.dkim.selectors) sections.push({title:`DKIM · ${key.selector}`,status:key.status,
+    details:[key.name, `Key: ${key.keyType || 'Unknown'}${key.bits ? ' · '+key.bits+' bits' : ''}`],records:key.records,findings:[...key.findings,...result.dkim.findings]});
+  sections.push({title:'Potential identifier alignment',status:'info',details:result.alignment.map(item=>`${item.kind}: ${item.status.toUpperCase()}${item.identity ? ' · '+item.identity : ''} — ${item.detail}`),records:[],findings:[]});
+  return sections;
+}
+function showDnsResults(result) {
+  const panel=$('dns-results'); panel.replaceChildren(); panel.classList.toggle('hidden',!result);
+  if (!result) return;
+  const scope=document.createElement('p');scope.className='dns-scope';scope.textContent=result.scope;
+  const stamp=document.createElement('p');stamp.className='dns-intro';stamp.textContent=`From domain: ${result.input.fromDomain} · Checked ${result.checkedAt}`;
+  const grid=document.createElement('div');grid.className='dns-result-grid';
+  for (const section of dnsSections(result)) {
+    const card=document.createElement('section');card.className='dns-result';
+    const title=document.createElement('h3');title.textContent=`${section.title} · ${section.status.toUpperCase()}`;
+    card.append(title);
+    for (const detail of section.details) {const p=document.createElement('p');p.textContent=detail;card.append(p);}
+    for (const record of section.records) {const code=document.createElement('code');code.className='dns-record';code.textContent=record;card.append(code);}
+    const list=document.createElement('ul');
+    for (const finding of section.findings) {const item=document.createElement('li');item.textContent=`${finding.level.toUpperCase()}: ${finding.message}`;list.append(item);}
+    card.append(list);grid.append(card);
+  }
+  const queries=document.createElement('details');queries.className='dns-queries';
+  const summary=document.createElement('summary');summary.textContent=`DNS query trace (${result.queries.length} unique TXT queries)`;
+  const trace=document.createElement('pre');trace.className='dns-record';trace.textContent=result.queries.map(q=>`${q.name}: ${q.status}${q.code ? ' ('+q.code+')' : ''}`).join('\n');
+  queries.append(summary,trace);panel.append(stamp,scope,grid,queries);
+}
+function dnsReportText() {
+  if (!lastDnsResult) return '';
+  const result=lastDnsResult;
+  const lines=[`SMTP Probe v${appVersion} — email DNS diagnostics`,`Checked: ${result.checkedAt}`,`From domain: ${result.input.fromDomain}`,`MAIL FROM: ${result.input.envelopeDomain || 'Not supplied'}`,`DKIM d=: ${result.input.dkimDomain || 'From domain assumed if selectors supplied'}`,`Scope: ${result.scope}`];
+  for (const section of dnsSections(result)) {
+    lines.push('',`${section.title}: ${section.status.toUpperCase()}`,...section.details,...section.records,...section.findings.map(f=>`${f.level.toUpperCase()}: ${f.message}`));
+  }
+  lines.push('','DNS query trace:',...result.queries.map(q=>`${q.name}: ${q.status}${q.code ? ' ('+q.code+')' : ''}`));
+  return lines.join('\n');
+}
+$('dns-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  if (dnsBusy) return;
+  if (!csrfToken) {window.location.replace('/');return;}
+  if (!$('dns-form').reportValidity()) return;
+  const input={fromDomain:$('dns-from').value.trim(),envelopeDomain:$('dns-envelope').value.trim(),dkimDomain:$('dns-signing').value.trim(),selectors:$('dns-selectors').value.trim()};
+  dnsBusy=true;lastDnsResult=null;showDnsResults(null);
+  $('dns-run-btn').disabled=true;$('dns-copy-btn').disabled=true;$('dns-download-btn').disabled=true;
+  $('dns-status').textContent='Checking DNS records…';
+  try {
+    const response=await fetch('/api/dns-diagnostics',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json','x-csrf-token':csrfToken},body:JSON.stringify(input),cache:'no-store'});
+    if (response.status===401) {window.location.replace('/');return;}
+    const result=await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    showDnsResults(result);lastDnsResult=result;
+    $('dns-status').textContent='DNS inspection complete. Review each finding; record presence is not a message authentication result.';
+    $('dns-copy-btn').disabled=false;$('dns-download-btn').disabled=false;
+  } catch(error) {$('dns-status').textContent=`DNS inspection failed: ${error.message || 'Unexpected error'}`;}
+  finally {dnsBusy=false;$('dns-run-btn').disabled=false;}
+});
+$('dns-copy-btn').addEventListener('click',async()=>{
+  if (!lastDnsResult) return;
+  try {await navigator.clipboard.writeText(dnsReportText());$('dns-copy-btn').textContent='Copied!';}
+  catch {$('dns-copy-btn').textContent='Clipboard blocked';}
+  setTimeout(()=>$('dns-copy-btn').textContent='Copy DNS report',1800);
+});
+$('dns-download-btn').addEventListener('click',()=>{
+  if (!lastDnsResult) return;
+  const url=URL.createObjectURL(new Blob([dnsReportText()],{type:'text/plain;charset=utf-8'}));
+  const link=document.createElement('a');link.href=url;link.download=`smtp-probe-dns-${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});

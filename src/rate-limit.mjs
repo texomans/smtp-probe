@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 // Limits protect external SMTP services, not just this UI. No usernames or
 // passwords are stored as plaintext in the limiter's keys.
 const POLICY = Object.freeze({
+  dns: { perIp: 6, perIpMs: 5 * 60_000, perHost: 40, perHostMs: 15 * 60_000,
+    perIdentity: 0, perIdentityMs: 15 * 60_000, global: 100, globalMs: 60 * 60_000 },
   verify: { perIp: 8, perIpMs: 5 * 60_000, perHost: 60, perHostMs: 15 * 60_000,
     perIdentity: 12, perIdentityMs: 15 * 60_000, global: 150, globalMs: 60 * 60_000 },
   send: { perIp: 3, perIpMs: 10 * 60_000, perHost: 12, perHostMs: 60 * 60_000,

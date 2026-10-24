@@ -61,6 +61,21 @@
       <div class="results-foot">Live transcript • Authentication data automatically redacted • No saved passwords</div>
     </div>
   </main>
+  <section class="dns-workspace card" aria-labelledby="dns-title">
+    <div class="card-heading"><div><div class="small-label">04 / EMAIL AUTHENTICATION</div><h2 id="dns-title">SPF, DKIM &amp; DMARC</h2></div><div class="report-actions"><button class="copy-btn" id="dns-copy-btn" type="button" disabled>Copy DNS report</button><button class="copy-btn" id="dns-download-btn" type="button" disabled>Download</button></div></div>
+    <p class="dns-intro">Inspect published DNS records and compare sending identities. No email is sent. DKIM selectors come from your mail provider or a message’s DKIM-Signature header.</p>
+    <form id="dns-form" autocomplete="off">
+      <div class="dns-fields">
+        <div><label for="dns-from">From domain</label><input id="dns-from" name="fromDomain" required maxlength="253" placeholder="example.com" autocomplete="off" spellcheck="false" /><div class="field-note">Domain shown in the visible From address.</div></div>
+        <div><label for="dns-envelope">MAIL FROM domain (optional)</label><input id="dns-envelope" name="envelopeDomain" maxlength="253" placeholder="bounce.example.com" spellcheck="false" /><div class="field-note">Return-Path domain. Blank inspects SPF at the From domain and skips SPF alignment.</div></div>
+        <div><label for="dns-signing">DKIM signing domain (optional)</label><input id="dns-signing" name="dkimDomain" maxlength="253" placeholder="Defaults to From domain" spellcheck="false" /><div class="field-note">The d= domain in the DKIM-Signature header.</div></div>
+        <div><label for="dns-selectors">DKIM selectors (optional)</label><input id="dns-selectors" name="selectors" maxlength="260" placeholder="selector1, selector2" spellcheck="false" /><div class="field-note">Up to four comma-separated s= selectors. Blank skips key checks.</div></div>
+      </div>
+      <button class="primary-btn dns-run" id="dns-run-btn" type="submit">Check email DNS <span>→</span></button>
+    </form>
+    <p id="dns-status" class="dns-intro" role="status">Ready to inspect DNS records.</p>
+    <div id="dns-results" class="hidden" aria-live="polite"></div>
+  </section>
   <footer class="footer"><div>© 2026 SMTP Probe contributors · MIT-licensed · Proudly vibe-coded with ChatGPT 😎</div><div>Independently inspired by <a href="https://smtptester.org" target="_blank" rel="noopener noreferrer">SMTPTester.org</a>. Not affiliated.</div></footer>
 </div>
 </body>
