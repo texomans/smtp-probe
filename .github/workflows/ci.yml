@@ -19,3 +19,12 @@ jobs:
         run: npm test
       - name: Build container image
         run: docker build --pull -t smtp-probe:ci .
+      - name: Smoke-test isolated candidate container
+        run: |
+          trap 'docker logs smtp-probe-smoke; docker rm -f smtp-probe-smoke' EXIT
+          docker run -d --name smtp-probe-smoke --network none \
+            -e SMTP_PROBE_PASSWORD=isolated-ci-only-password-123456789 \
+            -e SMTP_PROBE_COOKIE_SECURE=0 -e ALLOW_SEND=0 smtp-probe:ci
+          docker exec -i smtp-probe-smoke node --input-type=module < scripts/container-smoke-test.mjs
+          version=$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).version')
+          docker logs smtp-probe-smoke | grep -F "SMTP Probe v${version} listening on 0.0.0.0:3000 (send enabled: false)"
